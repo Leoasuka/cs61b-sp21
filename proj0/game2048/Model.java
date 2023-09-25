@@ -5,7 +5,7 @@ import java.util.Observable;
 
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author Asuka
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -109,15 +109,52 @@ public class Model extends Observable {
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
-
+        board.setViewingPerspective(side);
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        boolean [][] change_table = new boolean [4][4];
 
+        for(int row =board.size()-2;row>=0;row--){
+            for(int col=0;col<board.size();col++){
+                Tile this_tile = board.tile(col,row);
+                if(this_tile == null){
+                    continue;
+                }
+                int distence=1;
+                Tile up_tile = board.tile(col,row+1);
+                while (row+distence+1 < board.size() && board.tile(col,row+distence+1) == null){
+                    up_tile = board.tile(col,row+distence);
+                    distence++;
+                }
+
+                if(up_tile==null && row+distence+1 < board.size() && board.tile(col,row+distence+1) != null && board.tile(col,row+distence+1).value()== this_tile.value()){
+                    up_tile = board.tile(col,row+distence+1);
+                    distence++;
+                }
+
+                if(up_tile!=null && change_table [col][row+distence] == true){
+                    up_tile = board.tile(col,row+distence-1);
+                    distence-=1;
+                }
+
+                if(up_tile == null ||this_tile.value() == up_tile.value()){
+                        if(board.move(col, row+distence, this_tile)){
+                            change_table [col][row+distence] = true;
+                            score += this_tile.value()*2;
+                        }
+                        changed = true;
+                }
+
+
+            }
+        }
         checkGameOver();
         if (changed) {
             setChanged();
         }
+
+        board.setViewingPerspective(Side.NORTH);
         return changed;
     }
 
@@ -138,6 +175,15 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        int board_size = b.size();
+        for(int row=0;row<board_size;row++){
+            for(int col=0;col<board_size;col++){
+                Tile tile = b.tile(col,row);
+                if(tile == null || tile.value() == 0){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +194,18 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int board_size = b.size();
+        for(int row=0;row<board_size;row++){
+            for(int col=0;col<board_size;col++){
+                Tile tile = b.tile(col,row);
+                if(tile == null){
+                    continue;
+                }
+                else if(tile.value() == MAX_PIECE){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -158,7 +216,26 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        if (emptySpaceExists(b)){ return true;}
+        int board_size = b.size();
+        for(int row=0;row<board_size;row++){
+            for(int col=0;col<board_size;col++){
+                Tile this_tile = b.tile(col,row);
+                if(row != 0){
+                    Tile north_tile = b.tile(col,row-1);
+                    if(this_tile.value() == north_tile.value()){
+                        return true;
+                    }
+                }
+                if(col != board_size-1){
+                    Tile west_tile = b.tile(col+1,row);
+                    if(this_tile.value() == west_tile.value()){
+                        return true;
+                    }
+                }
+            }
+        }
+
         return false;
     }
 
